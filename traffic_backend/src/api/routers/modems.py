@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.deps import get_db_session
@@ -77,9 +77,9 @@ async def update_modem(modem_id: int, payload: ModemUpdate, session: AsyncSessio
     description="Delete an existing modem and all of its samples.",
     operation_id="delete_modem",
 )
-async def delete_modem(modem_id: int, session: AsyncSession = Depends(get_db_session)) -> None:
+async def delete_modem(modem_id: int, session: AsyncSession = Depends(get_db_session)) -> Response:
     """Delete modem by ID."""
     deleted = await modem_service.delete_modem(session, modem_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Modem not found")
-    return None
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
