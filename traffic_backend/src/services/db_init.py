@@ -1,36 +1,29 @@
 """
-Database initialization and seeding.
+Database initialization.
 
-Creates tables and ensures at least one modem exists (seed).
+Creates tables (no seed data).
 """
 
 from __future__ import annotations
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from src.db import get_engine, get_sessionmaker
+from src.db import get_engine
 from src.models.base import Base
-from src.models.modem import Modem
+
+# IMPORTANT:
+# Import the models package so all ORM classes are registered before
+# Base.metadata.create_all() and before any ORM query triggers mapper configuration.
+import src.models  # noqa: F401
 
 
 # PUBLIC_INTERFACE
 async def init_db() -> None:
-    """Create DB tables if missing and seed a default modem if none exist."""
+    """Create DB tables if missing.
+
+    This function intentionally does NOT seed any default Modem rows
+    (不需要 Modem 資料).
+    """
     engine: AsyncEngine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    sessionmaker = get_sessionmaker()
-    async with sessionmaker() as session:
-        res = await session.execute(select(Modem.id).limit(1))
-        existing = res.scalar_one_or_none()
-        if existing is None:
-            session.add(
-                Modem(
-                    name="Default Modem",
-                    ip="192.168.100.1",
-                    status="online",
-                )
-            )
-            await session.commit()
