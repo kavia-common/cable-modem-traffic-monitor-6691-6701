@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import Integer, and_, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.traffic_sample import TrafficSample
@@ -46,10 +46,10 @@ async def get_aggregated_points(
     bucket = _bucket_seconds(granularity)
 
     # SQLite: strftime('%s', timestamp) gives unix seconds.
-    # bucket_start = (unix // bucket) * bucket
+    # bucket_start_unix = (cast(unix as int) / bucket) * bucket, using integer truncation.
     unix = func.strftime("%s", TrafficSample.timestamp)
-    bucket_start_unix = (func.cast(unix, func.INTEGER) / bucket)
-    bucket_start_unix = func.cast(bucket_start_unix, func.INTEGER) * bucket
+    unix_int = cast(unix, Integer)
+    bucket_start_unix = cast((unix_int / bucket), Integer) * bucket
 
     bucket_dt = func.datetime(bucket_start_unix, "unixepoch")
 
